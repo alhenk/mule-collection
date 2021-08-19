@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+  <jms:config name="JMS_Config" doc:name="JMS Config" doc:id="491120f5-7d63-4c39-8055-a8de7fca1fbf" encoding="UTF-8" sendCorrelationId="ALWAYS">
+    <jms:active-mq-connection username="${jms.user}" password="${jms.password}">
+      <jms:factory-configuration brokerUrl="tcp://${jms.broker.host}:${jms.broker.port}" maxRedelivery="${jms.queuePolicy.maximumRedeliveries}" initialRedeliveryDelay="${jms.queuePolicy.initialRedeliveryDelay}" redeliveryDelay="${jms.queuePolicy.redeliveryDelay}"/>
+    </jms:active-mq-connection>
+    <jms:producer-config persistentDelivery="true" timeToLive="${jms.ttl}" timeToLiveUnit="SECONDS" />
+  </jms:config>
+  <os:object-store name="Object_store" doc:name="Object store" doc:id="d430ef46-5fbb-4d19-81d6-19bf9ee4afa2" />
+  <http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="bc61cd24-02b6-4835-b28f-c836d9521cf8" basePath="/" >
+    <http:listener-connection host="0.0.0.0" port="${http.port}" />
+  </http:listener-config>
+  <http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="ba4aca3c-fbf6-4a17-b1fd-053974d88dff" >
+    <http:request-connection host="${http.host}" port="${http.port}" />
+  </http:request-config>
+  <configuration-properties doc:name="Configuration properties" doc:id="f0a1917d-e1dc-46c3-a8bc-33d7cdee9e81" file="properties\config.yaml" />
+  <flow name="jms-consume-message" doc:id="5d4ccb67-b8ec-4d21-99d2-84e1f6ea7f05">
+    <jms:listener doc:name="ActiveMQ" doc:id="8f71e2a7-49c3-4ba8-83d0-e9a4e23861a0" config-ref="JMS_Config" destination="${jms.queue.name}" ackMode="AUTO" numberOfConsumers="1" transactionalAction="ALWAYS_BEGIN">
+      <jms:consumer-type >
+        <jms:queue-consumer />
+      </jms:consumer-type>
+      <jms:response sendCorrelationId="ALWAYS" correlationId="123" persistentDelivery="true" timeToLive="${jms.ttl}" timeToLiveUnit="SECONDS" >
+      </jms:response>
+    </jms:listener>
+    <set-variable value="#[payload]" doc:name="message" doc:id="dfe9ab67-e69e-4ea0-bd53-1cfc881eb2fd" variableName="message"/>
+    <try doc:name="Try" doc:id="c3e50c21-a201-4d3a-b3b7-18029cecdb14" transactionalAction="BEGIN_OR_JOIN">
+      <set-variable value='#[%dw 2.0&#10;import * from dw::Runtime&#10;output application/json&#10;---&#10;{ "user" : 1 } wait 5000]' doc:name="delay" doc:id="91115b6d-229d-4986-86b5-a4ed3c93bffb" variableName="delay" />
+      <os:retrieve doc:name="Retrieve attempts" doc:id="f896452a-924b-48ec-9319-78581d6719da" key="testRedeliveries" objectStore="Object_store">
+        <os:default-value ><![CDATA[#[output application/json
+---
+{
+	attempts: 0
+}]]]></os:default-value>
+      </os:retrieve>
+      <set-variable value='#[(payload.attempts default 1) - 1]' doc:name="attempts - 1" doc:id="6189a805-acde-4af9-9917-5c2494734d73" variableName="attempts"/>
+      <os:store doc:name="Store attempts" doc:id="f0712c35-5973-45b0-b460-02e74ee54288" key="testRedeliveries" objectStore="Object_store">
+        <os:value ><![CDATA[#[output application/json
+---
+{
+	attempts: vars.attempts
+}]]]></os:value>
+      </os:store>
+      <logger level="INFO" doc:name="Transaction State" doc:id="378759e4-5df9-42f2-bc55-367442532d44" message='#[output application/json&#10;---&#10;{&#10;	status: "TRYING TO CONSUME a MESSAGE from Queue = "++ Mule::p("jms.queue.name"),&#10;	attemptsLeft: vars.attempts,&#10;	message: vars.message,&#10;	timestamp: now()&#10;}]' />
+      <choice doc:name="Choice" doc:id="7f782547-22a2-45bb-8be6-3bf6cd58ef0c" >
+        <when expression='#[vars.attempts &gt; 0]'>
+          <http:request method="POST" doc:name="Invalid Request" doc:id="63967675-d309-4405-a3ea-12acd3b39f33" config-ref="HTTP_Request_configuration" path="/transaction/badrequest/destination">
+            <http:body ><![CDATA[#[vars.message]]]></http:body>
+          </http:request>
+        </when>
+        <otherwise>
+          <http:request method="POST" doc:name="Valid Request" doc:id="2ac79f3f-7640-404e-a687-f756fb57a625" config-ref="HTTP_Request_configuration" path="/transaction/destination">
+            <http:body ><![CDATA[#[vars.message]]]></http:body>
+          </http:request>
+        </otherwise>
+      </choice>
+    </try>
+  </flow>
+  <flow name="http-transaction-destination-flow" doc:id="f7efa674-6ed3-437c-8534-1f912ed78714" >
+    <http:listener doc:name="Listener" doc:id="a0edbe24-8c5e-401b-83da-ab2c30a6d514" config-ref="HTTP_Listener_config" path="/transaction/destination"/>
+    <logger level="INFO" doc:name="Transaction success" doc:id="185803c8-cee7-4b66-9a43-ab97e8266b3b" message='#[output application/json&#10;---&#10;{&#10;	status: "TRANSACTON SUCCES",&#10;	message: payload,&#10;	timestamp: now()&#10;}]'/>
+  </flow>
+  <flow name="jms-publish-message" doc:id="51a5431f-b952-4c50-907c-4068a17a919e" >
+    <scheduler doc:name="Scheduler" doc:id="a487ee51-a7d5-42d1-bca9-5f33d8264b79" >
+      <scheduling-strategy >
+        <fixed-frequency frequency="40000"/>
+      </scheduling-strategy>
+    </scheduler>
+    <os:store doc:name="Set attempts" doc:id="347e4424-0c04-487c-a1e0-29e2ae5ca6e2" key="testRedeliveries" objectStore="Object_store">
+      <os:value ><![CDATA[#[output application/json
+---
+{
+	attempts: Mule::p("test.redeliveriesAttempts")
+}]]]></os:value>
+    </os:store>
+    <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	text: "Mary has a little lamb"&#10;}]' doc:name="message" doc:id="1ff97885-fdaf-4cb5-b94b-2c256f1fad85" />
+    <jms:publish doc:name="Queue" doc:id="4dc56e15-4ac6-48bb-9205-0918b9a5abf4" config-ref="JMS_Config" destination="${jms.queue.name}" timeToLive="${jms.ttl}" timeToLiveUnit="SECONDS">
+    </jms:publish>
+    <logger level="INFO" doc:name="Current state" doc:id="ff857755-7376-4b89-a162-d3c377e2baf0" message='#[output applicaton/json&#10;---&#10;{&#10;	status: "message is published to QUEUE = "++ Mule::p("jms.queue.name"),&#10;	timestamp: now()&#10;}]' />
+  </flow>
+</mule>

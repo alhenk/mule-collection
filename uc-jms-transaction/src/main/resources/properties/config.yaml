@@ -1,0 +1,24 @@
+#
+# HTTP
+
+http:
+  host: "localhost"
+  port: "8081"
+
+#
+# ActiveMQ
+jms:
+  user: "admin"
+  password: "admin"
+  broker:
+    host: "localhost"
+    port: "61616"
+  queue: 
+    name: "uc-jms-transaction"
+  queuePolicy: 
+    initialRedeliveryDelay: "1000"
+    redeliveryDelay: "1000"
+    maximumRedeliveries: "3"
+  ttl: "100"
+test:
+  redeliveriesAttempts: "5"
