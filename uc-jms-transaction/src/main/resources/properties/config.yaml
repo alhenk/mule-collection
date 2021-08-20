@@ -19,6 +19,6 @@ jms:
     initialRedeliveryDelay: "1000"
     redeliveryDelay: "1000"
     maximumRedeliveries: "3"
-  ttl: "100"
+  ttl: "5"
 test:
   redeliveriesAttempts: "5"

@@ -79,8 +79,8 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 	attempts: Mule::p("test.redeliveriesAttempts")
 }]]]></os:value>
     </os:store>
-    <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	text: "Mary has a little lamb"&#10;}]' doc:name="message" doc:id="1ff97885-fdaf-4cb5-b94b-2c256f1fad85" />
-    <jms:publish doc:name="Queue" doc:id="4dc56e15-4ac6-48bb-9205-0918b9a5abf4" config-ref="JMS_Config" destination="${jms.queue.name}" timeToLive="${jms.ttl}" timeToLiveUnit="SECONDS">
+    <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	text: "Mary had a little lamb"&#10;}]' doc:name="message" doc:id="1ff97885-fdaf-4cb5-b94b-2c256f1fad85" />
+    <jms:publish doc:name="Queue" doc:id="4dc56e15-4ac6-48bb-9205-0918b9a5abf4" config-ref="JMS_Config" destination="ttl-queue" timeToLive="${jms.ttl}" timeToLiveUnit="SECONDS">
     </jms:publish>
     <logger level="INFO" doc:name="Current state" doc:id="ff857755-7376-4b89-a162-d3c377e2baf0" message='#[output applicaton/json&#10;---&#10;{&#10;	status: "message is published to QUEUE = "++ Mule::p("jms.queue.name"),&#10;	timestamp: now()&#10;}]' />
   </flow>

@@ -46,3 +46,9 @@ target/
 .mule/**/*
 .DS_Store
 velocity.log
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
