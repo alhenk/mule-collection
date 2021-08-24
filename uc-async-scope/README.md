@@ -1,8 +1,8 @@
 # uc-async-scope
 
-### Asynchronous Message Delivery
+### Using Async Scope for Message Delivery
 
-![Use case JMS Transaction](img/use-case-async-scope.png)
+![Using Async Scope for Message Delivery](img/use-case-async-scope.png)
 
 
 The flow receives a message through HTTP connector immediately responds OK.

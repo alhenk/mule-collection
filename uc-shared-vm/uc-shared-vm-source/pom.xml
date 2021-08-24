@@ -48,7 +48,7 @@
         </dependency>
         <dependency>
             <groupId>com.mycompany</groupId>
-            <artifactId>poc-vm-domain</artifactId>
+            <artifactId>uc-vm-domain</artifactId>
             <version>1.0.0-SNAPSHOT</version>
             <classifier>mule-domain</classifier>
             <scope>provided</scope>

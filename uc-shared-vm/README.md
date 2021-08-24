@@ -1,34 +1,18 @@
-# uc-jms-transaction
+# uc-shared-vm
 
-### Consuming messages from JMS queue 
+### Using Domain for Shared VM connector configuration
 
+![Using Domain for Shared VM connector configuration](img/use-case-shared-vm.png)
 
-![Use case JMS Transaction](img/use-case-jms-transaction.png)
+Two separate applications use shared VM queue for data exchange
 
-A message is published in a persistent queue.
-Then, a JMS client is trying to consume the message and send it to an HTTP endpoint.
-The message will be consumed and deleted from the queue only if the endpoint returns HTTP OK response.
-The queue allows several attempts for reading the message with a given time interval.
-When the client exceeds the number of retry attempts, the message is redirected to a DLQ.
+##### Set Run Configuration for starting the Domain and two apps
+![Run Configuration](img/vm_domain.png)
 
-### Install ActiveMQ broker
+Run it!
 
-- download and unzip __apache-activemq-5.15.15__
-- set configuration file activemq.xml
+#### Pros:
+- no additional external message broker
 
-set createConnector - true
-```
-<managementContext createConnector="true"/>
-```
-add
-```
-<policyEntry queue=">">
-  <deadLetterStrategy>
-    <individualDeadLetterStrategy queuePrefix="" queueSuffix=".dlq" useQueueForQueueMessages="true" />
-  </deadLetterStrategy>
-</policyEntry>
-```
-run
-```
-bin>activemq start
-```
+#### Cons:
+- only for On-Premises Mule Runtime, not for cloud
