@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+  <flow name="poc-invoke-jar-flow" doc:id="cae8f3ba-8ac3-4c63-b343-59472751189c" >
+    <scheduler doc:name="Scheduler" doc:id="67fd3fbd-03ec-4135-8efb-17766bf408bf" >
+      <scheduling-strategy >
+        <fixed-frequency/>
+      </scheduling-strategy>
+    </scheduler>
+    <set-variable value="Mule" doc:name="Name" doc:id="d62fefd7-fd8a-4136-95c4-3dc43b7204dd" variableName="name"/>
+    <java:new doc:name="Utils" doc:id="6e3cb3e4-322d-4050-a853-6c185f8ebe80" class="com.mycompany.usecase.javainvoke.Utils" constructor="Utils()">
+    </java:new>
+    <java:invoke doc:name="Greet" doc:id="50c0d7ed-43cb-4d7c-8a85-120dd307d9f6" instance="#[payload]" class="com.mycompany.usecase.javainvoke.Utils" method='greet(java.lang.String)'>
+      <java:args ><![CDATA[#[{ arg0: vars.name}]]]></java:args>
+    </java:invoke>
+    <logger level="INFO" doc:name="Logger" doc:id="a052ad84-daa2-49ed-b4db-c8bf784b0bb0" message="#[output application/json&#10;---&#10;{&#10;	say: payload&#10;}]"/>
+    <set-payload value="#[&quot;It's time to say &quot;]" doc:name="Set Payload" doc:id="a24a3c93-0f6e-4d83-90a1-53a0dd0f8884" />
+    <ee:transform doc:name="use static method" doc:id="36a30411-2a39-439f-832e-703b924e7af9" >
+      <ee:message >
+        <ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+import java!com::mycompany::usecase::javainvoke::Utils
+---
+{
+	say: payload ++ (Utils::goodbye(vars.name) default "" as String)
+}]]></ee:set-payload>
+      </ee:message>
+    </ee:transform>
+    <logger level="INFO" doc:name="payload" doc:id="de848bd0-0a0f-4765-9730-f9fbe0c575d2" message="#[payload]"/>
+  </flow>
+  <flow name="poc-invoke-java-flow" doc:id="b79376ac-4bf1-4cb5-9658-e433842543d1" >
+    <scheduler doc:name="Scheduler" doc:id="a29ed62a-13a5-487f-a0f3-3349f8d6348e" >
+      <scheduling-strategy >
+        <fixed-frequency startDelay="500"/>
+      </scheduling-strategy>
+    </scheduler>
+    <set-variable value="Mule" doc:name="Name" doc:id="06116801-c404-493a-a401-604fbd1a8431" variableName="name" />
+    <java:new doc:name="Runner" doc:id="3ba07695-2923-4d27-8b98-5b6683ec7f2b" class="com.mycompany.usecase.javainvoke.Runner" constructor="Runner()"/>
+    <java:invoke method="run()" doc:name="Run" doc:id="cabf5b72-2a96-46b0-91cf-0092e76a32ef" instance="#[payload]" class="com.mycompany.usecase.javainvoke.Runner" >
+    </java:invoke>
+    <logger level="INFO" doc:name="payload" doc:id="37d42c84-76b2-42be-825d-c7f97bc2ab8b" message="#[output application/json&#10;---&#10;{&#10;	cry: payload&#10;}]" />
+  </flow>
+</mule>
