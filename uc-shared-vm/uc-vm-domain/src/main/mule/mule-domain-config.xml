@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<domain:mule-domain
+xmlns:vm="http://www.mulesoft.org/schema/mule/vm"
+	        xmlns="http://www.mulesoft.org/schema/mule/core"
+        xmlns:domain="http://www.mulesoft.org/schema/mule/ee/domain"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+        xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd 
+               http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+               http://www.mulesoft.org/schema/mule/ee/domain http://www.mulesoft.org/schema/mule/ee/domain/current/mule-domain-ee.xsd">
+  <vm:config name="SharedVmConnector" doc:name="VM Config" doc:id="49e1d10e-8e4d-4c99-93b7-68aabb108381" sendCorrelationId="ALWAYS" >
+    <vm:queues >
+      <vm:queue queueName="poc-message-queue" />
+    </vm:queues>
+  </vm:config>
+
+
+    <!-- configure here resource to be shared within the domain -->
+ 
+</domain:mule-domain>

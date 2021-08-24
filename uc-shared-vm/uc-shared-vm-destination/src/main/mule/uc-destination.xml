@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+  <flow name="message-destination-flow" doc:id="90ddf345-a1f0-44d4-a986-e749b6ac1961" >
+    <vm:listener doc:name="Listener" doc:id="cc71d2fd-de08-4253-bc97-63469bb71ce8" config-ref="SharedVmConnector" queueName="poc-message-queue"/>
+    <logger level="INFO" doc:name="payload" doc:id="c58c86b1-f60e-4650-95bb-51ff88324363" message="#[payload]"/>
+  </flow>
+</mule>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:vm="http://www.mulesoft.org/schema/mule/vm" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/vm http://www.mulesoft.org/schema/mule/vm/current/mule-vm.xsd">
+  <flow name="message-source-flow" doc:id="23fde74f-183d-4cfd-ab58-265db28c69df" >
+    <scheduler doc:name="Scheduler" doc:id="03885f9c-b717-4d47-bc10-82815c11dcb9" >
+      <scheduling-strategy >
+        <fixed-frequency />
+      </scheduling-strategy>
+    </scheduler>
+    <set-payload value="#[output application/json&#10;---&#10;{&#10;	timeStamp: now()&#10;}]" doc:name="Set Payload" doc:id="597a2006-9573-4daf-97a4-7c6a7949ca37" />
+    <vm:publish doc:name="Publish" doc:id="d4f169b0-0774-4af0-9b0b-a63d09d4482e" sendCorrelationId="ALWAYS" correlationId='#["message-" ++ (randomInt(1000) as String)]' queueName="poc-message-queue" config-ref="SharedVmConnector"/>
+  </flow>
+</mule>
