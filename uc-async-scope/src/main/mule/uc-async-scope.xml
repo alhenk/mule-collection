@@ -11,19 +11,19 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
     <http:request-connection host="localhost" port="8081" />
   </http:request-config>
   <flow name="message-service" doc:id="832d7642-304f-4bea-aaa2-3b12e4faefe5" >
-    <http:listener doc:name="/async/messages" doc:id="dc8c2844-ff67-43a2-ae03-86df84d55c37" config-ref="HTTP_Listener_config" path="/async/messages"/>
-    <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	status: "SENT",&#10;	timestamp: now()&#10;}]' doc:name="Message" doc:id="e4fbe199-230d-4aeb-a1aa-09b685d4ee67" />
+    <http:listener doc:name="/async/messages" doc:id="dc8c2844-ff67-43a2-ae03-86df84d55c37" config-ref="HTTP_Listener_config" path="/async/messages" allowedMethods="POST"/>
+    <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	status: "SENT",&#10;	message: write(payload, "application/json"),&#10;	timestamp: now()&#10;}]' doc:name="Message" doc:id="e4fbe199-230d-4aeb-a1aa-09b685d4ee67" />
     <flow-ref doc:name="uc-async-sub-flow" doc:id="cd5d46e2-1785-4768-ac2c-14f59f433364" name="uc-async-sub-flow" />
     <logger level="INFO" doc:name="Message Sent" doc:id="b9a1a242-f089-4872-8e6a-60e045063579" message='#[payload]' />
   </flow>
   <flow name="message-destination" doc:id="546e3312-1fdf-4fb9-ba8f-dbd41f68bb8b" >
-    <http:listener doc:name="/async/destination" doc:id="72acab8a-0e92-4a39-be87-0b7268333b7e" config-ref="HTTP_Listener_config" path="/async/destination"/>
-    <logger level="INFO" doc:name="Message Delivered" doc:id="9a1112a9-570d-4f4e-89c1-22d49049cbf3" message='#[output applicaton/json&#10;---&#10;{&#10;	status: "DELIVERED",&#10;	timestamp: now()&#10;}]'/>
+    <http:listener doc:name="/async/destination" doc:id="72acab8a-0e92-4a39-be87-0b7268333b7e" config-ref="HTTP_Listener_config" path="/async/destination" allowedMethods="POST"/>
+    <logger level="INFO" doc:name="Message Delivered" doc:id="9a1112a9-570d-4f4e-89c1-22d49049cbf3" message='#[payload]'/>
   </flow>
   <sub-flow name="uc-async-sub-flow" doc:id="96727c51-0111-4588-9258-421dfb52d885" >
     <async doc:name="Async" doc:id="46717fba-336a-4a27-a5ee-0b3cc96f780c" >
       <set-variable value='#[%dw 2.0&#10;import * from dw::Runtime&#10;output application/json&#10;---&#10;{ "user" : 1 } wait 10000]' doc:name="Mock Processing Delay" doc:id="dc29e04c-147e-42e8-bcdd-0a785ad77703" variableName="delay"/>
-      <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	status: "DELIVERED",&#10;	timestamp: now()&#10;}]' doc:name="Delivery Report" doc:id="86ed9f18-5a29-41be-b0a1-f9d9579e7a31" />
+      <set-payload value='#[output applicaton/json&#10;---&#10;{&#10;	status: "DELIVERED",&#10;	message: payload.message,&#10;	timestamp: now()&#10;}]' doc:name="Delivery Report" doc:id="86ed9f18-5a29-41be-b0a1-f9d9579e7a31" />
       <http:request method="POST" doc:name="Destination" doc:id="f63fd00d-dc18-497a-97e1-2bd9a4630fc7" config-ref="HTTP_Request_configuration" path="/async/destination"/>
     </async>
   </sub-flow>
