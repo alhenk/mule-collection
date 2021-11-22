@@ -1,3 +1,16 @@
 {
-   "route": "product"
+	"routes": [
+		{
+			"name": "product_url",
+			"url":  "product"
+		},
+		{
+			"name": "client_url",
+			"url":  "client"
+		},
+		{
+			"name": "order_url",
+			"url":  "order"
+		}
+	]
 }

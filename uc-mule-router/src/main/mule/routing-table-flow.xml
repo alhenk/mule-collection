@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="router-api" doc:id="c0bf6367-4296-4c34-8449-8bbeef752912" >
+		<http:listener doc:name="/router" doc:id="9d176663-c14a-4d41-bfb8-006c37df7783" config-ref="HTTP_Listener_config" path="/router"/>
+		<os:retrieve doc:name="isActual" doc:id="a3581b8e-2586-4d63-a157-9266d37e6936" key="isActual" objectStore="Routing_Table">
+			<os:default-value><![CDATA[#[false]]]></os:default-value>
+		</os:retrieve>
+		<choice doc:name="Choice" doc:id="53076604-3001-4e5d-8229-3ac03866d785">
+			<when expression="#[payload == false]">
+				<logger level="INFO" doc:name="retrieve table" doc:id="7e5c6ae0-ffb4-4afa-bda1-bdbdd10ec893" message='#[output application/json&#10;---&#10;{&#10;	action: "retrieve routing table"&#10;}]' />
+				<flow-ref doc:name="retrieve-routing-table" doc:id="c8af3e6e-816a-40d6-bd5d-a07b42b98d8f" name="retrieve-routing-table" />
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="idle" doc:id="f3ce5a67-9da6-4daa-b1db-d87c5e11e344" message='#[output application/json&#10;---&#10;{&#10;	action: "idle - keep routing table"&#10;}]' />
+			</otherwise>
+		</choice>
+		<os:retrieve-all doc:name="Retrieve all" doc:id="93fa659f-2ea0-4b50-bf7b-d9a2791f6dff" objectStore="Routing_Table"/>
+		<ee:transform doc:name="http response" doc:id="8948ec2b-2a33-4e47-a909-fc75537d277d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="retrieve-routing-table" doc:id="5766db17-10c3-4675-a7c2-850aa89b30f8" >
+		<scheduler doc:name="Scheduler" doc:id="b5fde2b3-82d9-453d-909b-324e6374d804" >
+			<scheduling-strategy >
+				<cron expression=" 0 1 1 * * ? 2121" />
+			</scheduling-strategy>
+		</scheduler>
+		<file:read doc:name="Read" doc:id="5eee727b-f740-4e81-a0d5-f87202effb31" config-ref="File_Config" path="${app.home}/routing_table.json" outputMimeType="application/json" outputEncoding="UTF-8"/>
+		<ee:transform doc:name="to JSON" doc:id="d989f904-b5ac-4447-ae54-5cdbcb9790c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[output application/json&#10;---&#10;payload.routes]" doc:name="routes" doc:id="3c78b526-e4be-443a-971d-5737bf5f6e1d" variableName="routes"/>
+		<foreach doc:name="For Each Route" doc:id="ec724b85-f370-4f5d-9255-501d5c50d261" collection="#[vars.routes]">
+			<os:store doc:name="Routing Table" doc:id="cfe381f2-be69-4468-a2f3-7852f78b4a22" key="#[payload.name]" objectStore="Routing_Table">
+				<os:value ><![CDATA[#[payload.url]]]></os:value>
+			</os:store>
+		</foreach>
+		<os:store doc:name="Actualize Routing Table" doc:id="46c59f45-3b79-4ab4-9218-8f9150d6d447" key="isActual" objectStore="Routing_Table">
+					<os:value><![CDATA[#[true]]]></os:value>
+				</os:store>
+	</flow>
+</mule>
