@@ -1,0 +1,2 @@
+routes:
+  urls: "product|client|order"

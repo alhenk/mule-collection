@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="2a09bdae-649a-4500-a47e-9c3044cc53d5" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="94dd4249-b6e0-4dce-b264-81e37430c0a4" file="properties\dev-config.yaml" />
+	<os:object-store name="Routing_Table" doc:name="Object store" doc:id="3925b698-1f19-4acb-aa63-08906eaad0a6" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="c1ec605d-9c41-48ee-a259-e9c1f6d19ef9" />
+	<flow name="mule-fanout-flow" doc:id="299d68dd-9d2a-4fba-bc54-0acce7b8b0a1" >
+		<scheduler doc:name="Scheduler" doc:id="64f8d9b2-06d9-405e-b6ab-8b50f6e71aff" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="3000"/>
+			</scheduling-strategy>
+		</scheduler>
+		<foreach doc:name="For Each URL" doc:id="0c4b45bc-7104-4c61-9bed-d0c5fe252fb1" collection='splitBy(Mule::p("routes.urls"), "|")'>
+			<set-variable value='#[%dw 2.0&#10;output text/plain&#10;---&#10;splitBy(Mule::p("routes.urls"), "|")[(vars.counter as Number) - 1]]' doc:name="resource" doc:id="95f8b79a-4339-46c5-8db0-2d3566840e59" variableName="resource"/>
+			<set-variable value='#[%dw 2.0&#10;output text/plain&#10;---&#10;"http://2c25bdab-2530-44e9-b070-187c8178e9c8.mock.pstmn.io/api/" ++ (vars.resource default "" as String)]' doc:name="url" doc:id="1cfdaa12-5298-4b01-aa6a-623863fae39a" variableName="url"/>
+			<http:request method="GET" doc:name="Request" doc:id="badae312-f522-4a8b-a17b-6165588dd791" url="#[vars.url]"/>
+		</foreach>
+	</flow>
+	<flow name="mule-routing-table-flow" doc:id="ec6fbfa0-d6a2-407c-af6b-12a796812487" >
+		<scheduler doc:name="Scheduler" doc:id="804176cf-1781-4080-8471-66698d249497" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="10000"/>
+			</scheduling-strategy>
+		</scheduler>
+		<os:retrieve doc:name="Retrieve" doc:id="ce937aa1-67c5-4527-8b61-d6e715d4017c" key="isFresh" objectStore="Routing_Table">
+			<os:default-value ><![CDATA[#[false]]]></os:default-value>
+		</os:retrieve>
+		<choice doc:name="Choice" doc:id="b96916cd-7d97-41bd-9f65-3ca88c1a5eee" >
+			<when expression="#[payload == false]">
+				<logger level="INFO" doc:name="Logger" doc:id="8af1f652-9e32-4225-a15e-919520b186d8" message='#[output application/json&#10;---&#10;{&#10;	action: "retrieve routing table"&#10;}]' />
+				<file:read doc:name="Read" doc:id="9a9deab2-7770-4207-9c18-482a0f26a8aa" config-ref="File_Config" path="${app.home}/routing_table.json" />
+				<logger level="INFO" doc:name="Logger" doc:id="5d63efb0-97b3-46c0-9cdc-5aaf8366684c" message="#[output application/json&#10;&#10;---&#10;payload.route]"/>
+				<os:store doc:name="Store" doc:id="21ae2e84-4bc0-4c75-8c9f-6c7eec6fad7c" objectStore="Routing_Table" key="isFresh">
+					<os:value><![CDATA[#[true]]]></os:value>
+				</os:store>
+			</when>
+			<otherwise>
+				<os:store doc:name="Store" doc:id="9cae41cd-0de0-471f-981c-c3bf21b17306" objectStore="Routing_Table" key="isFresh">
+					<os:value ><![CDATA[#[false]]]></os:value>
+				</os:store>
+				<logger level="INFO" doc:name="Logger" doc:id="85fa4331-a24d-43cd-9c9b-a47ee567045b" message='#[output application/json&#10;---&#10;{&#10;	action: "expire routing table"&#10;}]'/>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

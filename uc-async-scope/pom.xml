@@ -15,6 +15,7 @@
 
         <app.runtime>4.3.0-20210719</app.runtime>
         <mule.maven.plugin.version>3.5.2</mule.maven.plugin.version>
+        <munit.version>2.3.2</munit.version>
     </properties>
 
     <build>
@@ -46,6 +47,26 @@
             <version>1.2.1</version>
             <classifier>mule-plugin</classifier>
         </dependency>
+        <dependency>
+      <groupId>org.mule.weave</groupId>
+      <artifactId>assertions</artifactId>
+      <version>1.0.2</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.mulesoft.munit</groupId>
+      <artifactId>munit-runner</artifactId>
+      <version>${munit.version}</version>
+      <classifier>mule-plugin</classifier>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.mulesoft.munit</groupId>
+      <artifactId>munit-tools</artifactId>
+      <version>${munit.version}</version>
+      <classifier>mule-plugin</classifier>
+      <scope>test</scope>
+    </dependency>
     </dependencies>
 
     <repositories>
