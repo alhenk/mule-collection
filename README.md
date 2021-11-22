@@ -5,6 +5,7 @@
 - [uc-async-scope](/uc-async-scope)
 - [uc-shared-vm-domain](/uc-shared-vm)
 - [uc-invoke-java](/uc-invoke-java)
+- [uc-mule-router](/uc-mule-router)
 
 To add this project to the Anypoint Studio:
 1. Download the project to your computer
