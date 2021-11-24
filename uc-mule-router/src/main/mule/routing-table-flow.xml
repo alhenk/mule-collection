@@ -7,6 +7,10 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="routing-table-api" doc:id="88186746-023e-4b3f-93e1-89bb6869f677">
+		<http:listener doc:name="PUT/routing-table/action" doc:id="f7163406-1240-485c-9dc1-6933c5c37d4e" config-ref="HTTP_Listener_config" path="/routing-table/action" allowedMethods="PUT" />
+		<flow-ref doc:name="Flow Reference" doc:id="6fbea907-21d8-4d4e-ba60-0924e3ebfa27" name="store-routing-table"/>
+	</flow>
 	<flow name="router-api" doc:id="c0bf6367-4296-4c34-8449-8bbeef752912" >
 		<http:listener doc:name="/router" doc:id="9d176663-c14a-4d41-bfb8-006c37df7783" config-ref="HTTP_Listener_config" path="/router"/>
 		<os:retrieve doc:name="isActual" doc:id="a3581b8e-2586-4d63-a157-9266d37e6936" key="isActual" objectStore="Routing_Table">
@@ -14,8 +18,8 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		</os:retrieve>
 		<choice doc:name="Choice" doc:id="53076604-3001-4e5d-8229-3ac03866d785">
 			<when expression="#[payload == false]">
-				<logger level="INFO" doc:name="retrieve table" doc:id="7e5c6ae0-ffb4-4afa-bda1-bdbdd10ec893" message='#[output application/json&#10;---&#10;{&#10;	action: "retrieve routing table"&#10;}]' />
-				<flow-ref doc:name="retrieve-routing-table" doc:id="c8af3e6e-816a-40d6-bd5d-a07b42b98d8f" name="retrieve-routing-table" />
+				<logger level="INFO" doc:name="store table" doc:id="7e5c6ae0-ffb4-4afa-bda1-bdbdd10ec893" message='#[output application/json&#10;---&#10;{&#10;	action: "store routing table"&#10;}]' />
+				<flow-ref doc:name="store-routing-table" doc:id="c8af3e6e-816a-40d6-bd5d-a07b42b98d8f" name="store-routing-table" />
 			</when>
 			<otherwise>
 				<logger level="INFO" doc:name="idle" doc:id="f3ce5a67-9da6-4daa-b1db-d87c5e11e344" message='#[output application/json&#10;---&#10;{&#10;	action: "idle - keep routing table"&#10;}]' />
@@ -31,7 +35,7 @@ payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</flow>
-	<flow name="retrieve-routing-table" doc:id="5766db17-10c3-4675-a7c2-850aa89b30f8" >
+	<flow name="store-routing-table" doc:id="5766db17-10c3-4675-a7c2-850aa89b30f8" >
 		<scheduler doc:name="Scheduler" doc:id="b5fde2b3-82d9-453d-909b-324e6374d804" >
 			<scheduling-strategy >
 				<cron expression=" 0 1 1 * * ? 2121" />
@@ -56,5 +60,6 @@ payload]]></ee:set-payload>
 		<os:store doc:name="Actualize Routing Table" doc:id="46c59f45-3b79-4ab4-9218-8f9150d6d447" key="isActual" objectStore="Routing_Table">
 					<os:value><![CDATA[#[true]]]></os:value>
 				</os:store>
+		<set-payload value='#["Routing Table is updated"]' doc:name="Routing Table Status" doc:id="877c5baf-580c-4cc3-8f8c-e0e7c186192a" />
 	</flow>
 </mule>
